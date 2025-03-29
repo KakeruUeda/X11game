@@ -1,0 +1,3 @@
+/Users/kakeru/Documents/Projects/Dev/X11game/build/CMakeFiles/X11game.dir
+/Users/kakeru/Documents/Projects/Dev/X11game/build/CMakeFiles/edit_cache.dir
+/Users/kakeru/Documents/Projects/Dev/X11game/build/CMakeFiles/rebuild_cache.dir

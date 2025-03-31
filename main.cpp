@@ -11,12 +11,21 @@
 
 namespace mygame {
 
+struct Rect {
+    long x, y;
+    long width, height;
+};
+
 class GameDisplay {
 public:
     GameDisplay();
     ~GameDisplay();
 
     Display* getDisplay();
+
+    void drawRect(unsigned long col, int x, int y, int width, int height);
+    void redraw();
+    Rect getGeometry();
 
 private:
     Display *display_;
@@ -37,7 +46,7 @@ GameDisplay::GameDisplay() {
                                     BlackPixel(display_, screen_), WhitePixel(display_, screen_));
     
     
-    XSelectInput(display_, window_, KeyPressMask);
+    XSelectInput(display_, window_, KeyPressMask | ExposureMask);
     XMapWindow(display_, window_);
 }
 
@@ -47,6 +56,48 @@ GameDisplay::~GameDisplay() {
 
 Display *GameDisplay::getDisplay() {
     return display_;
+}
+
+void GameDisplay::drawRect(unsigned long col, int x, int y, int width, int height) {
+    XSetForeground(display_, DefaultGC(display_, screen_), col);
+    XFillRectangle(display_, window_, DefaultGC(display_, screen_), x, y, width, height);
+}
+
+void GameDisplay::redraw() {
+    XClearWindow(display_, window_);
+    Window root_wind;
+    int x, y;
+    unsigned int width, height, border_width, depth;
+    XGetGeometry(display_, window_, &root_wind, &x, &y, &width,
+                    &height, &border_width, &depth);
+    XEvent ev;
+    ev.xexpose.type = Expose;
+    ev.xexpose.display = display_;
+    ev.xexpose.window = window_;
+    ev.xexpose.x = x;
+    ev.xexpose.y = y;
+    ev.xexpose.width = width;
+    ev.xexpose.height = height;
+    ev.xexpose.count = 0;
+
+    XSendEvent(display_, window_, false, ExposureMask, &ev);
+}
+
+Rect GameDisplay::getGeometry() {
+    Window root_wind;
+    int x, y;
+    unsigned int width, height, border_width, depth;
+    XGetGeometry(display_, window_, &root_wind, &x, &y, &width,
+                    &height, &border_width, &depth);
+
+    Rect r;
+
+    r.x = x;
+    r.y = y;
+    r.width = width;
+    r.height = height;
+
+    return r;
 }
 
 class Game {
@@ -60,9 +111,13 @@ private:
     XEvent event_;
 
     bool is_running_ = true; 
+    int x_ = 10;
+    int y_ = 10;
 
     bool getEvent();
     void handleEvent();
+    bool isPlayerWithinBounds();
+
 };
 
 Game::Game() {
@@ -72,7 +127,11 @@ void Game::run() {
     while (is_running_) {
         if (getEvent()){
             handleEvent();
-        };
+            if (!isPlayerWithinBounds()) {
+                printf("PLAYER OUT OF BOUNDS .. GAME OVER!! .. YOU LOSE!!\n");
+                is_running_ = false;
+            }
+        }
     }
 }
 
@@ -88,19 +147,32 @@ bool Game::getEvent() {
 }
 
 void Game::handleEvent() {
+    if(event_.type == Expose) {
+        gamedisplay_.drawRect(0x6091ab, x_, y_, 10, 10);
+    }
     if(event_.type == KeyPress) {
         printf("KeyPress Event: %d\n", event_.xkey.keycode);
     
         switch (event_.xkey.keycode) {
-            case KEY_UP       : printf("KEY_UP\n"); break;
-            case KEY_DOWN     : printf("KEY_DOWN\n"); break;
-            case KEY_LEFT     : printf("KEY_LEFT\n"); break;
-            case KEY_RIGHT    : printf("KEY_RIGHT\n"); break;
-            case KEY_SPACEBAR : printf("KEYY__SPACEBAR\n"); break;
+            case KEY_UP       : printf("KEY_UP\n");    y_ -= 2; gamedisplay_.redraw(); break;
+            case KEY_DOWN     : printf("KEY_DOWN\n");  y_ += 2; gamedisplay_.redraw(); break;
+            case KEY_LEFT     : printf("KEY_LEFT\n");  x_ -= 2; gamedisplay_.redraw(); break;
+            case KEY_RIGHT    : printf("KEY_RIGHT\n"); x_ += 2; gamedisplay_.redraw(); break;
+            case KEY_SPACEBAR : printf("KEY_SPACEBAR\n"); break;
             case KEY_ESCAPE   : printf("KEY_ESCAPE\n"); 
                                 is_running_ = false; break;
         }
     }
+}
+
+bool Game::isPlayerWithinBounds() {
+    Rect w = gamedisplay_.getGeometry();
+    
+    if (x_ < 0 || x_ > w.width || y_ < 0 || y_ > w.height) {
+        return false;
+    }
+
+    return true;
 }
 
 }

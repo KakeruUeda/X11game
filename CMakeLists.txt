@@ -9,7 +9,12 @@ find_package(X11)
 message(STATUS "X11 include dirs: ${X11_INCLUDE_DIR}")
 message(STATUS "X11 libraries: ${X11_LIBRARIES}")
 
-add_executable(X11game main.cpp)
+include_directories(include)
+
+file(GLOB_RECURSE SOURCES src/*.cpp)
+
+# add_executable(X11game main.cpp)
+add_executable(X11game ${SOURCES})
 
 target_include_directories(X11game
 PRIVATE 

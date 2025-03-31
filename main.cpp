@@ -1,6 +1,18 @@
+/*!
+ * X11game
+ *
+ * Copyright (c) 2025
+ *
+ * Released under the MIT license.
+ * see https://opensource.org/licenses/MIT
+ */
+
 #include <X11/Xlib.h>
 #include <cstdio>
 #include <stdexcept>
+#include <vector>
+#include <cstdlib>
+#include <ctime>
 
 #define KEY_ESCAPE     61
 #define KEY_SPACEBAR   57
@@ -11,6 +23,14 @@
 
 namespace mygame {
 
+struct Point {
+    int x, y;
+};
+
+struct Size {
+    long width, height;
+};
+
 struct Rect {
     long x, y;
     long width, height;
@@ -18,6 +38,8 @@ struct Rect {
 
 class GameDisplay {
 public:
+    const int DEFAULT_WIDTH = 800;
+    const int DEFAULT_HEIGHT = 600;
     GameDisplay();
     ~GameDisplay();
 
@@ -42,8 +64,8 @@ GameDisplay::GameDisplay() {
     
     screen_ = DefaultScreen(display_);
     
-    window_ = XCreateSimpleWindow(display_, RootWindow(display_, screen_), 0, 0, 100, 100, 1, 
-                                    BlackPixel(display_, screen_), WhitePixel(display_, screen_));
+    window_ = XCreateSimpleWindow(display_, RootWindow(display_, screen_), 0, 0, DEFAULT_WIDTH, DEFAULT_HEIGHT, 1, 
+                                    BlackPixel(display_, screen_), 0x363d4d);
     
     
     XSelectInput(display_, window_, KeyPressMask | ExposureMask);
@@ -100,6 +122,18 @@ Rect GameDisplay::getGeometry() {
     return r;
 }
 
+struct Player {
+    unsigned long color = 0x1077e6;
+    Point position { 10, 10 };
+    Size size { 10, 10 };
+};
+
+struct Food {
+    unsigned long color = 0xe69810;
+    Point position { 100, 100 };
+    Size size { 10, 10 };
+};
+
 class Game {
 public:
     Game();
@@ -110,17 +144,25 @@ private:
     GameDisplay gamedisplay_;
     XEvent event_;
 
+    Player player_;
+    std::vector<Food> food_;
+
     bool is_running_ = true; 
-    int x_ = 10;
-    int y_ = 10;
 
     bool getEvent();
     void handleEvent();
     bool isPlayerWithinBounds();
+    void drawPlayer();
+    void draw();
+    void createFood();
+    void drawSingleFood(const Food &f);
+    void drawAllFood();
 
 };
 
 Game::Game() {
+    std::srand(std::time(nullptr));
+    createFood();
 }
 
 void Game::run() {
@@ -146,18 +188,58 @@ bool Game::getEvent() {
     return false;
 }
 
+void Game::drawPlayer() {
+    gamedisplay_.drawRect(player_.color, 
+        player_.position.x, 
+        player_.position.y,
+        player_.size.width,
+        player_.size.height);
+}
+
+void Game::draw() {
+    drawAllFood();
+    drawPlayer();
+}
+
+void Game::createFood() {
+    food_.clear();
+    food_.resize(10);
+    
+    const int MAXX = 800;
+    const int MAXY = 600;
+
+    for (auto &f : food_) {
+        f.position.x = std::rand() % MAXX;
+        f.position.y = std::rand() % MAXY;
+    }
+}
+
+void Game::drawSingleFood(const Food &f) {
+    gamedisplay_.drawRect(f.color, 
+        f.position.x, 
+        f.position.y,
+        f.size.width,
+        f.size.height);
+}
+
+void Game::drawAllFood() {
+    for (auto &f : food_) {
+        drawSingleFood(f);
+    }
+}
+
 void Game::handleEvent() {
     if(event_.type == Expose) {
-        gamedisplay_.drawRect(0x6091ab, x_, y_, 10, 10);
+        draw();
     }
     if(event_.type == KeyPress) {
         printf("KeyPress Event: %d\n", event_.xkey.keycode);
     
         switch (event_.xkey.keycode) {
-            case KEY_UP       : printf("KEY_UP\n");    y_ -= 2; gamedisplay_.redraw(); break;
-            case KEY_DOWN     : printf("KEY_DOWN\n");  y_ += 2; gamedisplay_.redraw(); break;
-            case KEY_LEFT     : printf("KEY_LEFT\n");  x_ -= 2; gamedisplay_.redraw(); break;
-            case KEY_RIGHT    : printf("KEY_RIGHT\n"); x_ += 2; gamedisplay_.redraw(); break;
+            case KEY_UP       : printf("KEY_UP\n");    player_.position.y -= 10; gamedisplay_.redraw(); break;
+            case KEY_DOWN     : printf("KEY_DOWN\n");  player_.position.y += 10; gamedisplay_.redraw(); break;
+            case KEY_LEFT     : printf("KEY_LEFT\n");  player_.position.x -= 10; gamedisplay_.redraw(); break;
+            case KEY_RIGHT    : printf("KEY_RIGHT\n"); player_.position.x += 10; gamedisplay_.redraw(); break;
             case KEY_SPACEBAR : printf("KEY_SPACEBAR\n"); break;
             case KEY_ESCAPE   : printf("KEY_ESCAPE\n"); 
                                 is_running_ = false; break;
@@ -168,7 +250,8 @@ void Game::handleEvent() {
 bool Game::isPlayerWithinBounds() {
     Rect w = gamedisplay_.getGeometry();
     
-    if (x_ < 0 || x_ > w.width || y_ < 0 || y_ > w.height) {
+    if (   player_.position.x < 0 || player_.position.x > w.width
+        || player_.position.y < 0 || player_.position.y > w.height) {
         return false;
     }
 

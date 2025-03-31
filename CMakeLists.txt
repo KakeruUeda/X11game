@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.10)
 project(X11game-project)
 
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
+
 find_package(X11)
 
 message(STATUS "X11 include dirs: ${X11_INCLUDE_DIR}")

@@ -55,8 +55,8 @@ void Game::createFood() {
     const int MAXY = 600;
 
     for (auto &f : food_) {
-        f.position.x = std::rand() % MAXX;
-        f.position.y = std::rand() % MAXY;
+        f.position.x = (std::rand() % MAXX) / 10 * 10;
+        f.position.y = (std::rand() % MAXY) / 10 * 10;
     }
 }
 
@@ -71,6 +71,14 @@ void Game::drawSingleFood(const Food &f) {
 void Game::drawAllFood() {
     for (auto &f : food_) {
         drawSingleFood(f);
+    }
+}
+
+void Game::update() {
+    for (auto &f : food_) {
+        if (rectangleIntersect(player_.bounds(), f.bounds())) {
+            f.color = 0xff0000;
+        }
     }
 }
 
@@ -90,6 +98,7 @@ void Game::handleEvent() {
             case KEY_ESCAPE   : printf("KEY_ESCAPE\n"); 
                                 is_running_ = false; break;
         }
+        update();
     }
 }
 

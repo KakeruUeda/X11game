@@ -27,6 +27,7 @@ private:
     void createFood();
     void drawSingleFood(const Food &f);
     void drawAllFood();
+    void update();
 };
 
 }

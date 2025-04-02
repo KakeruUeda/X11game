@@ -17,6 +17,7 @@ private:
     XEvent event_;
     Player player_;
     std::vector<Food> food_;
+    std::vector<Ghost> ghosts_;
     bool is_running_ = true;
 
     bool getEvent();
@@ -25,8 +26,10 @@ private:
     void drawPlayer();
     void draw();
     void createFood();
-    void drawSingleFood(const Food &f);
     void drawAllFood();
+    void createGhosts();
+    void drawAllGhosts();
+    void drawCharacter(const Character &obj) const;
     void update();
 };
 

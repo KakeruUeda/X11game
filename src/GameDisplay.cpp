@@ -28,7 +28,7 @@ Display *GameDisplay::getDisplay() {
     return display_;
 }
 
-void GameDisplay::drawRect(unsigned long col, int x, int y, int width, int height) {
+void GameDisplay::drawRect(unsigned long col, int x, int y, int width, int height) const {
     XSetForeground(display_, DefaultGC(display_, screen_), col);
     XFillRectangle(display_, window_, DefaultGC(display_, screen_), x, y, width, height);
 }

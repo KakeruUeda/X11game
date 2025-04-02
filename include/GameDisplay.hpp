@@ -15,7 +15,7 @@ public:
     ~GameDisplay();
 
     Display* getDisplay();
-    void drawRect(unsigned long col, int x, int y, int width, int height);
+    void drawRect(unsigned long col, int x, int y, int width, int height) const;
     void redraw();
     Rect getGeometry();
 

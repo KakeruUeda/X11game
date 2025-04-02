@@ -64,24 +64,29 @@ inline bool rectangleIntersect(const Rect &r1, const Rect &r2) {
     return false;
 }
 
-struct Player {
-    unsigned long color = 0x1077e6;
-    Point position { 10, 10 };
-    Size size { 10, 10 };
+struct Character {
+    unsigned long color;
+    Point position;
+    Size size;
 
-    Rect bounds() {
+    Character(unsigned long new_col, Point new_pos, Size new_sz)
+    : color(new_col), position(new_pos), size(new_sz) {};
+
+    Rect bounds() const {
         return { position.x, position.y, size.width, size.height };
     }
 };
 
-struct Food {
-    unsigned long color = 0xe69810;
-    Point position { 100, 100 };
-    Size size { 10, 10 };
+struct Player : public Character {
+    Player() : Character(0x1077e6, {10, 10}, {10, 10}) {};
+};
 
-    Rect bounds() {
-        return { position.x, position.y, size.width, size.height };
-    }
+struct Food : public Character {
+    Food() : Character(0xe69810, {10, 10}, {10, 10}) {};
+};
+
+struct Ghost : public Character {
+    Ghost() : Character(0xa832a8, {10, 10}, {10, 10}) {};
 };
 
 }

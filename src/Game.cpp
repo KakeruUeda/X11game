@@ -3,12 +3,15 @@
 #include <cstdio>
 #include <cstdlib>
 #include <ctime>
+#include <algorithm>
+#include <iostream>
 
 namespace mygame {
 
 Game::Game() {
     std::srand(std::time(nullptr));
     createFood();
+    createGhosts();
 }
 
 void Game::run() {
@@ -44,6 +47,7 @@ void Game::drawPlayer() {
 
 void Game::draw() {
     drawAllFood();
+    drawAllGhosts();
     drawPlayer();
 }
 
@@ -60,26 +64,63 @@ void Game::createFood() {
     }
 }
 
-void Game::drawSingleFood(const Food &f) {
-    gamedisplay_.drawRect(f.color, 
-        f.position.x, 
-        f.position.y,
-        f.size.width,
-        f.size.height);
-}
-
 void Game::drawAllFood() {
     for (auto &f : food_) {
-        drawSingleFood(f);
+        drawCharacter(f);
     }
 }
 
-void Game::update() {
-    for (auto &f : food_) {
-        if (rectangleIntersect(player_.bounds(), f.bounds())) {
-            f.color = 0xff0000;
-        }
+void Game::createGhosts() {
+    ghosts_.clear();
+    ghosts_.resize(10);
+    
+    const int MAXX = 800;
+    const int MAXY = 600;
+
+    for (auto &g : ghosts_) {
+        g.position.x = (std::rand() % MAXX) / 10 * 10;
+        g.position.y = (std::rand() % MAXY) / 10 * 10;
     }
+}
+
+void Game::drawAllGhosts() {
+    for (auto &g : ghosts_) {
+        drawCharacter(g);
+    }
+}
+
+void Game::drawCharacter(const Character &obj) const {
+    gamedisplay_.drawRect(obj.color, 
+        obj.position.x, 
+        obj.position.y,
+        obj.size.width,
+        obj.size.height);
+}
+
+
+void Game::update() {
+    auto iter = std::find_if(food_.begin(), food_.end(), [&](const Food &f) {
+        return rectangleIntersect(player_.bounds(), f.bounds());
+    });
+
+    if (iter != food_.end()) {
+        food_.erase(iter);
+    }
+
+    if (food_.empty()) {
+        is_running_ = false;
+        std::cout << "YOU LOSE!!\n";
+    }
+
+	auto iter_ghosts = std::find_if(ghosts_.begin(), ghosts_.end(), [&](const Ghost &g){
+		return rectangleIntersect(player_.bounds(), g.bounds());
+	});
+
+	if (iter_ghosts != ghosts_.end())
+	{
+		is_running_ = false;
+		std::cout << "YOU LOSE!!\n";
+	}
 }
 
 void Game::handleEvent() {

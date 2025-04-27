@@ -1,5 +1,8 @@
 #pragma once
 
+/*
+    For my macOS
+*/
 #define KEY_ESCAPE     61
 #define KEY_SPACEBAR   57
 #define KEY_UP        134
